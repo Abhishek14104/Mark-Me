@@ -1,5 +1,3 @@
-// import 'package:awesome_notifications/awesome_notifications.dart';
-
 import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:flutter/material.dart';
 
@@ -10,19 +8,35 @@ class NotificationService {
       [
         NotificationChannel(
           channelKey: 'basic_channel',
-          channelName: 'Basic Notifications',
+          channelName: 'Class Reminders',
           channelDescription: 'Notification for class reminders',
-          defaultColor: const Color(0xFF9D50DD),
-          ledColor: const Color(0xFF9D50DD),
+          defaultColor: Colors.teal,
+          importance: NotificationImportance.High,
+          channelShowBadge: true,
         ),
       ],
       debug: true,
     );
 
-    // 🔥 Request permission to send notifications
-    final isAllowed = await AwesomeNotifications().isNotificationAllowed();
+    // Ask for permission if not granted
+    bool isAllowed = await AwesomeNotifications().isNotificationAllowed();
     if (!isAllowed) {
       await AwesomeNotifications().requestPermissionToSendNotifications();
     }
+  }
+
+  static Future<void> showInstantNotification({
+    required String title,
+    required String body,
+  }) async {
+    await AwesomeNotifications().createNotification(
+      content: NotificationContent(
+        id: DateTime.now().millisecondsSinceEpoch % 100000,
+        channelKey: 'basic_channel',
+        title: title,
+        body: body,
+        notificationLayout: NotificationLayout.Default,
+      ),
+    );
   }
 }

@@ -13,7 +13,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
-        // ✅ Kotlin syntax for enabling desugaring
         isCoreLibraryDesugaringEnabled = true
     }
 
@@ -41,10 +40,8 @@ flutter {
 }
 
 dependencies {
-    // ✅ Kotlin syntax for desugaring
     add("coreLibraryDesugaring", "com.android.tools:desugar_jdk_libs:2.0.4")
 
     implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
     implementation("com.google.firebase:firebase-analytics")
-    // Add other Firebase dependencies here as needed
 }

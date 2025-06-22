@@ -4,6 +4,7 @@ import '../views/register_view.dart';
 import '../views/home_view.dart';
 import 'app_routes.dart';
 import '../views/schedule_view.dart';
+import '../views/attendance_detail_view.dart';
 
 class AppPages {
   static const initial = AppRoutes.login;
@@ -25,5 +26,6 @@ class AppPages {
   name: AppRoutes.schedule,
   page: () => const ScheduleView(),
 ),
+GetPage(name: AppRoutes.attendanceDetail, page: () => const AttendanceDetailView()),
   ];
 }

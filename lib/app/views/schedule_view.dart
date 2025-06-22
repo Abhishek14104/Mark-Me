@@ -79,39 +79,39 @@ class _ScheduleViewState extends State<ScheduleView> {
   }
 
   Future<String?> _pickTime(String title) async {
-  final time = await showTimePicker(
-    context: context,
-    helpText: title, // <- Adds a heading
-    initialTime: TimeOfDay.now(),
-  );
-  if (time == null) return null;
-  return DateFormat.jm().format(DateTime(0, 1, 1, time.hour, time.minute));
-}
-
-Future<void> _selectTimeForDay(String day) async {
-  final startTime = await _pickTime("Select Start Time for $day");
-  if (startTime == null) return;
-  final endTime = await _pickTime("Select End Time for $day");
-  if (endTime == null) return;
-
-  final location =
-      await Navigator.push<LatLng>(
-        context,
-        MaterialPageRoute(builder: (_) => const MapPickerView()),
-      ) ??
-      lastSelectedLocation;
-
-  if (location != null) {
-    setState(() {
-      selectedDayTimeMap[day] = {
-        'start': startTime,
-        'end': endTime,
-        'location': location,
-      };
-      lastSelectedLocation = location;
-    });
+    final time = await showTimePicker(
+      context: context,
+      helpText: title, // <- Adds a heading
+      initialTime: TimeOfDay.now(),
+    );
+    if (time == null) return null;
+    return DateFormat.jm().format(DateTime(0, 1, 1, time.hour, time.minute));
   }
-}
+
+  Future<void> _selectTimeForDay(String day) async {
+    final startTime = await _pickTime("Select Start Time for $day");
+    if (startTime == null) return;
+    final endTime = await _pickTime("Select End Time for $day");
+    if (endTime == null) return;
+
+    final location =
+        await Navigator.push<LatLng>(
+          context,
+          MaterialPageRoute(builder: (_) => const MapPickerView()),
+        ) ??
+        lastSelectedLocation;
+
+    if (location != null) {
+      setState(() {
+        selectedDayTimeMap[day] = {
+          'start': startTime,
+          'end': endTime,
+          'location': location,
+        };
+        lastSelectedLocation = location;
+      });
+    }
+  }
 
   void _addSchedule() async {
     if (_formKey.currentState!.validate() && selectedDayTimeMap.isNotEmpty) {
@@ -142,39 +142,37 @@ Future<void> _selectTimeForDay(String day) async {
           .collection('schedules')
           .add(scheduleData);
 
-      int notificationIdCounter = DateTime.now().millisecondsSinceEpoch % 100000;
-TimeOfDay _parseTimeOfDay(String timeString) {
-  final format = DateFormat.jm(); // Example: "3:30 PM"
-  final dt = format.parse(timeString);
-  return TimeOfDay(hour: dt.hour, minute: dt.minute);
-}
+      int notificationIdCounter =
+          DateTime.now().millisecondsSinceEpoch % 100000;
+      TimeOfDay _parseTimeOfDay(String timeString) {
+        final format = DateFormat.jm();
+        final dt = format.parse(timeString);
+        return TimeOfDay(hour: dt.hour, minute: dt.minute);
+      }
 
-for (final entry in selectedDayTimeMap.entries) {
-  final weekdayIndex = allDays.indexOf(entry.key) + 1; // Mon = 1, ..., Sun = 7
-  final startTimeString = entry.value['start'];
-  final time = _parseTimeOfDay(startTimeString);
+      for (final entry in selectedDayTimeMap.entries) {
+        final weekdayIndex = allDays.indexOf(entry.key) + 1;
+        final startTimeString = entry.value['start'];
+        final time = _parseTimeOfDay(startTimeString);
 
-  // final now = DateTime.now();
-// final nextClassTime = ...; // Calculate DateTime from selected weekday and start time
-
-await AwesomeNotifications().createNotification(
-  content: NotificationContent(
-    id: notificationIdCounter++,
-    channelKey: 'basic_channel',
-    title: 'Upcoming class: ${courseController.text.trim()}',
-    body: 'Starts at ${entry.value['start']} on ${entry.key}',
-    notificationLayout: NotificationLayout.Default,
-  ),
-  schedule: NotificationCalendar(
-    weekday: weekdayIndex,
-    hour: time.hour,
-    minute: time.minute,
-    second: 0,
-    millisecond: 0,
-    repeats: true,
-  ),
-);
-}
+        await AwesomeNotifications().createNotification(
+          content: NotificationContent(
+            id: notificationIdCounter++,
+            channelKey: 'basic_channel',
+            title: 'Upcoming class: ${courseController.text.trim()}',
+            body: 'Starts at ${entry.value['start']} on ${entry.key}',
+            notificationLayout: NotificationLayout.Default,
+          ),
+          schedule: NotificationCalendar(
+            weekday: weekdayIndex,
+            hour: time.hour,
+            minute: time.minute,
+            second: 0,
+            millisecond: 0,
+            repeats: true,
+          ),
+        );
+      }
 
       final localData = {
         'id': docRef.id,
