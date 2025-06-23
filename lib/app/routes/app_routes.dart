@@ -3,5 +3,5 @@ class AppRoutes {
   static const register = '/register';
   static const home = '/home';
   static const schedule = '/schedule';
-  static const attendanceDetail = '/attendance-detail'; // ✅ Add this
+  static const attendanceDetail = '/attendance-detail'; 
 }

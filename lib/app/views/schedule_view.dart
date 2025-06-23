@@ -1,12 +1,11 @@
-import 'package:awesome_notifications/awesome_notifications.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
-import 'package:mark_me/app/services/notification_service.dart';
 import 'map_picker_view.dart';
+import 'package:flutter/services.dart';
 
 class ScheduleView extends StatefulWidget {
   const ScheduleView({super.key});
@@ -16,6 +15,8 @@ class ScheduleView extends StatefulWidget {
 }
 
 class _ScheduleViewState extends State<ScheduleView> {
+  static const platform = MethodChannel('com.example.mark_me/alarm');
+
   final _formKey = GlobalKey<FormState>();
   final courseController = TextEditingController();
 
@@ -37,6 +38,17 @@ class _ScheduleViewState extends State<ScheduleView> {
   void initState() {
     super.initState();
     _loadSchedulesFromDB();
+  }
+
+  Future<void> _triggerKotlinAlarmSetup() async {
+    try {
+      await platform.invokeMethod('setupAlarms', {
+        'uid': FirebaseAuth.instance.currentUser?.uid,
+      });
+      print("Kotlin alarm setup triggered");
+    } catch (e) {
+      print("Error triggering Kotlin alarm setup: $e");
+    }
   }
 
   Future<void> _loadSchedulesFromDB() async {
@@ -81,7 +93,7 @@ class _ScheduleViewState extends State<ScheduleView> {
   Future<String?> _pickTime(String title) async {
     final time = await showTimePicker(
       context: context,
-      helpText: title, // <- Adds a heading
+      helpText: title,
       initialTime: TimeOfDay.now(),
     );
     if (time == null) return null;
@@ -142,6 +154,8 @@ class _ScheduleViewState extends State<ScheduleView> {
           .collection('schedules')
           .add(scheduleData);
 
+      await _triggerKotlinAlarmSetup();
+
       int notificationIdCounter =
           DateTime.now().millisecondsSinceEpoch % 100000;
       TimeOfDay _parseTimeOfDay(String timeString) {
@@ -149,31 +163,7 @@ class _ScheduleViewState extends State<ScheduleView> {
         final dt = format.parse(timeString);
         return TimeOfDay(hour: dt.hour, minute: dt.minute);
       }
-
-      for (final entry in selectedDayTimeMap.entries) {
-        final weekdayIndex = allDays.indexOf(entry.key) + 1;
-        final startTimeString = entry.value['start'];
-        final time = _parseTimeOfDay(startTimeString);
-
-        await AwesomeNotifications().createNotification(
-          content: NotificationContent(
-            id: notificationIdCounter++,
-            channelKey: 'basic_channel',
-            title: 'Upcoming class: ${courseController.text.trim()}',
-            body: 'Starts at ${entry.value['start']} on ${entry.key}',
-            notificationLayout: NotificationLayout.Default,
-          ),
-          schedule: NotificationCalendar(
-            weekday: weekdayIndex,
-            hour: time.hour,
-            minute: time.minute,
-            second: 0,
-            millisecond: 0,
-            repeats: true,
-          ),
-        );
-      }
-
+      
       final localData = {
         'id': docRef.id,
         'course': courseController.text.trim(),
@@ -333,12 +323,22 @@ class _ScheduleViewState extends State<ScheduleView> {
                       setState(() => scheduleList.removeAt(i));
 
                       if (uid != null && docId != null) {
-                        await FirebaseFirestore.instance
+                        final scheduleDocRef = FirebaseFirestore.instance
                             .collection('users')
                             .doc(uid)
                             .collection('schedules')
-                            .doc(docId)
-                            .delete();
+                            .doc(docId);
+
+                        // Delete attendance subcollection first
+                        final attendanceSnapshot = await scheduleDocRef
+                            .collection('attendance')
+                            .get();
+                        for (final attDoc in attendanceSnapshot.docs) {
+                          await attDoc.reference.delete();
+                        }
+
+                        // Then delete the schedule document itself
+                        await scheduleDocRef.delete();
                       }
 
                       ScaffoldMessenger.of(context).showSnackBar(
