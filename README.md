@@ -1,29 +1,31 @@
-# Mark Me - Location Based Attendance Tracker
+# Mark Me - Location-Based Attendance Tracker
 
-Mark Me is a Flutter-based attendance tracker that automatically marks class attendance based on your location and schedule. It is designed for students who want minimal manual input with accurate tracking.
+Mark Me is a Flutter + Kotlin hybrid attendance app that automatically marks class attendance based on your location and weekly schedule. It’s built for students who want accurate, low-effort tracking without manual check-ins.
 
 ---
 
 ## Features
 
-- Weekly class scheduling with day, time, and location
-- Automatic attendance marking based on real-time location
+- Schedule weekly classes with day, time, and location
+- Automatic attendance marking at class time based on real-time location
 - Manual override with custom reasons (e.g., "Teacher absent")
-- Attendance history per class with present/absent stats
+- Attendance history per subject (present/absent stats)
 - Location selection via OpenStreetMap modal picker
-- Firebase authentication (email & password login)
+- Class reminder notifications (20 minutes before)
+- Firebase Authentication (Email/Password login)
 
 ---
 
 ## Tech Stack
 
-- **Flutter** - UI and app logic
-- **Firebase Auth + Firestore** - User login and schedule storage
-- **GetX** - State management and routing
-- **Geolocator** - Location access and distance checking
-- **Workmanager** - Background service to mark attendance
-- **Awesome Notifications** - Class reminders
-- **OpenStreetMap (flutter_map)** - Location picker UI
+| Layer        | Tool/Library                          |
+|--------------|----------------------------------------|
+| UI & Logic   | Flutter + GetX                        |
+| Backend      | Firebase Auth + Firestore             |
+| Location     | Geolocator (Flutter) + FusedLocation (Kotlin) |
+| Background   | Kotlin native: AlarmManager, BroadcastReceiver, ForegroundService |
+| Reminders    | Kotlin native: NotificationManager     |
+| Location UI  | flutter_map + OpenStreetMap            |
 
 ---
 
@@ -44,32 +46,36 @@ flutter pub get
 
 ### 3. Firebase Setup (Required)
 
-This project uses Firebase Auth and Firestore, so you must set up your own Firebase project.
-
-#### Steps:
-
-1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create a new project
-3. Add an Android app (use your own package name or keep `com.example.mark_me`)
-4. Download the `google-services.json` file and place it in:
+* Go to [Firebase Console](https://console.firebase.google.com/)
+* Create a new project
+* Add an Android app using your package name (e.g., `com.example.mark_me`)
+* Download `google-services.json` and place it in:
 
 ```
 android/app/google-services.json
 ```
 
-6. Replace the existing `firebase_options.dart` file by generating one using the Firebase CLI:
+* Generate `firebase_options.dart` using the Firebase CLI:
 
 ```bash
 flutterfire configure
 ```
 
-> This step ensures your app is connected to your own Firebase backend.
+### 4. Permissions & Device Setup
+
+Ensure the app has the following runtime permissions:
+
+* Location (`ACCESS_FINE_LOCATION`)
+* Notification (on Android 13+)
+* Schedule exact alarms (`SCHEDULE_EXACT_ALARM`) — prompted via native Kotlin
+
+Important: Exact alarm permission must be manually approved from system settings on Android 12+. The app will automatically open the settings page if permission is not granted.
 
 ---
 
-### 4. Run the App
+### 5. Run the App
 
-Make sure you have a device or emulator running:
+Make sure your device/emulator is connected and location is enabled:
 
 ```bash
 flutter run
@@ -77,10 +83,11 @@ flutter run
 
 ---
 
-## Notes
+## Permissions Used
 
-* The app schedules background checks every 15 minutes to verify attendance.
-* No Google Maps API key is required — location picker uses OpenStreetMap.
-* Class reminders and attendance marking work offline (notifications and location).
-* You must grant location permission and enable location services for the app to function correctly.
+| Permission                         | Why It's Needed                                      |
+| ---------------------------------- | ---------------------------------------------------- |
+| `ACCESS_FINE_LOCATION`             | To detect proximity to the class location            |
+| `POST_NOTIFICATIONS` (Android 13+) | To show reminder and attendance result notifications |
+| `SCHEDULE_EXACT_ALARM`             | To trigger alarms at the exact class time            |
 
